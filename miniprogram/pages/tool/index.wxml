@@ -1,0 +1,294 @@
+<view class="page">
+
+<!-- 顶部 -->
+<view class="header-wrap">
+  <view class="header">
+    <view class="header-left">
+      <text class="header-title">已完成</text>
+      <text class="header-sub">共 {{items.length}} 项</text>
+    </view>
+    <view class="header-right">
+  <view class="tool-sort-btn" bindtap="openSortModal">
+    <text class="tool-sort-icon">⇅</text>
+  </view>
+  <view class="tool-clear-btn" bindtap="openClearAllModal">
+    <text class="tool-clear-icon">🗑</text>
+  </view>
+  <view class="tool-about-btn" bindtap="openAboutModal">
+    <text class="tool-about-icon">ℹ</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+
+<!-- 列表 -->
+<view class="card-list">
+
+  <!-- 空状态 -->
+  <view wx:if="{{!items.length}}" class="empty">
+    <text class="empty-icon">✅</text>
+    <text class="empty-text">还没有已完成项目</text>
+    <text class="empty-hint">在进行中右滑项目可完成</text>
+  </view>
+
+  <!-- 卡片 -->
+  <view
+    wx:for="{{items}}"
+    wx:key="id"
+    class="card-wrap {{item.flyOut ? 'card-wrap-flyout' : ''}} {{item.flyOutRestore ? 'card-wrap-flyout-restore' : ''}} {{item.flyOutCollapse ? 'card-wrap-flyout-collapse' : ''}}"
+    style="{{item.wrapStyle || ''}}"
+    data-id="{{item.id}}"
+    bindtouchstart="onCardTouchStart"
+    bindtouchmove="onCardTouchMove"
+    bindtouchend="onCardTouchEnd"
+  >
+    <!-- 背景按钮 -->
+    <view
+      class="card-bg-btn {{item.swiping === 'restore' ? 'card-bg-restore' : 'card-bg-delete'}}"
+      catchtap="{{item.swiping === 'restore' ? 'onRestoreBtnTap' : 'onDeleteBtnTap'}}"
+      data-id="{{item.id}}"
+    >
+      <text class="card-bg-btn-text">{{item.swiping === 'restore' ? '↩ 继续滑动以恢复' : '继续滑动以删除'}}</text>
+    </view>
+
+    <view
+      class="card {{item.cardClass}} {{item.noGlow ? 'card-no-glow' : ''}}"
+      bindtap="onItemTap"
+      data-id="{{item.id}}"
+      style="transform:translateX({{item.swipeOffset}}rpx); {{item.cardStyle}}"
+    >
+      <view class="card-photo-wrap">
+        <image wx:if="{{item.photo}}" src="{{item.photo}}" class="card-photo" mode="aspectFill"/>
+        <view wx:else class="card-photo-placeholder">
+          <text>{{item.emoji}}</text>
+        </view>
+      </view>
+      <view class="card-center">
+        <view class="card-name-row">
+          <text class="card-name">{{item.name}}</text>
+        </view>
+        <text class="card-date">完成于：{{item.completedStr}}</text>
+        <text wx:if="{{item.note}}" class="card-note">{{item.note}}</text>
+      </view>
+      <view class="card-right">
+        <text class="card-label">{{item.label}}</text>
+        <text class="card-days">{{item.days}}</text>
+        <text class="card-unit">{{item.unit}}</text>
+      </view>
+    </view>
+
+  </view>
+
+</view>
+
+</view>
+
+<!-- 详情弹窗 -->
+<view
+class="modal-mask modal-mask-edit {{modalActive ? 'modal-mask-active' : ''}}"
+wx:if="{{showModal}}"
+bindtap="closeModal"
+>
+<view
+  class="modal {{modalActive ? 'modal-active' : ''}}"
+  style="transform:translateY(calc({{modalDragOffset}}px + {{modalActive ? '0%' : '100%'}}));"
+  catchtap="stopPropagation"
+  bindtouchstart="onModalTouchStart"
+  bindtouchmove="onModalTouchMove"
+  bindtouchend="onModalTouchEnd"
+>
+  <scroll-view scroll-y class="modal-scroll" bindscroll="onModalScroll">
+    <view class="modal-inner">
+      <view class="modal-drag-bar"></view>
+      <view class="modal-header">
+        <view class="modal-header-btn modal-close-btn" bindtap="closeModal">
+          <text class="modal-header-btn-icon">✕</text>
+        </view>
+        <text class="modal-title">{{selectedItem.name}}</text>
+        <view class="modal-header-btn modal-restore-btn" bindtap="onRestoreFromModal">
+          <text class="modal-header-btn-icon">↩</text>
+        </view>
+      </view>
+
+      <view class="detail-row">
+        <text class="detail-label">完成时间</text>
+        <text class="detail-value">{{selectedItem.completedStr}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">计时类型</text>
+        <text class="detail-value">{{selectedItem.mode === 'countdown' ? '⏳ 倒计时' : '⏱ 正计时'}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">{{selectedItem.mode === 'countdown' ? '到期日期' : '开始日期'}}</text>
+        <text class="detail-value">{{selectedItem.date}} {{selectedItem.time}}</text>
+      </view>
+      <view wx:if="{{selectedItem.note}}" class="detail-row">
+        <text class="detail-label">备注</text>
+        <text class="detail-value">{{selectedItem.note}}</text>
+      </view>
+
+    </view>
+  </scroll-view>
+</view>
+</view>
+
+<!-- 撤销横幅 -->
+<view class="undo-bar {{undoVisible ? 'undo-bar-active' : ''}}" wx:if="{{showUndo}}">
+<text class="undo-text">已删除 {{undoCount}} 个项目</text>
+<text class="undo-countdown">{{undoCountdown}}s</text>
+<view class="undo-btn" bindtap="undoDelete">
+  <text class="undo-btn-text">撤销</text>
+</view>
+<view class="undo-bar-progress" style="width:{{undoProgressWidth}}%;"></view>
+</view>
+
+<!-- 排序撤销横幅 -->
+<view
+  class="undo-bar sort-undo-bar {{sortUndoVisible ? 'undo-bar-active' : ''}}"
+  wx:if="{{showSortUndo}}"
+>
+  <view class="undo-close-btn" catchtap="dismissSortUndoBar">
+    <text class="undo-close-icon">✕</text>
+  </view>
+  <text class="undo-text">排序方式已更改</text>
+  <text class="undo-countdown">{{sortUndoCountdown}}s</text>
+  <view class="undo-btn" bindtap="undoSort">
+    <text class="undo-btn-text">撤销</text>
+  </view>
+  <view class="undo-bar-progress sort-undo-bar-progress" style="width:{{sortUndoProgressWidth}}%;"></view>
+</view>
+
+<!-- 清空确认弹窗 -->
+<view
+  class="modal-mask modal-mask-clearall {{clearAllModalActive ? 'modal-mask-active' : ''}}"
+  wx:if="{{showClearAllModal}}"
+  bindtap="closeClearAllModal"
+  catchtouchmove="stopPropagation"
+>
+  <view
+    class="modal confirm-modal {{clearAllModalActive ? 'modal-active' : ''}}"
+    catchtap="stopPropagation"
+    bindtouchstart="onClearAllModalTouchStart"
+    bindtouchmove="onClearAllModalTouchMove"
+    bindtouchend="onClearAllModalTouchEnd"
+  >
+    <view class="modal-drag-bar"></view>
+    <view class="confirm-icon">🗑</view>
+    <text class="confirm-title">清空已完成</text>
+    <text class="confirm-desc">将删除全部 {{clearAllCount}} 项已完成记录。</text>
+    <view class="save-btn danger-btn" catchtap="executeClearAll">确认清空</view>
+    <view class="cancel-btn" catchtap="closeClearAllModal">取消</view>
+  </view>
+</view>
+
+<!-- 清空撤销横幅 -->
+<view class="undo-bar {{clearAllUndoVisible ? 'undo-bar-active' : ''}}" wx:if="{{showClearAllUndo}}">
+  <text class="undo-text">已清空 {{undoCount}} 项</text>
+  <text class="undo-countdown">{{undoCountdown}}s</text>
+  <view class="undo-btn" bindtap="undoClearAll">
+    <text class="undo-btn-text">撤销</text>
+  </view>
+  <view class="undo-bar-progress" style="width:{{undoProgressWidth}}%;"></view>
+</view>
+
+<!-- 排序弹窗 -->
+<view
+  class="modal-mask modal-mask-sort {{sortModalActive ? 'modal-mask-active' : ''}}"
+  wx:if="{{showSortModal}}"
+  bindtap="closeSortModal"
+  catchtouchmove="stopPropagation"
+>
+  <view
+    class="modal sort-modal {{sortModalActive ? 'modal-active' : ''}}"
+    catchtap="stopPropagation"
+    bindtouchstart="onSortModalTouchStart"
+    bindtouchmove="onSortModalTouchMove"
+    bindtouchend="onSortModalTouchEnd"
+  >
+    <view class="modal-drag-bar"></view>
+    <text class="modal-title sort-modal-title">排序方式</text>
+
+    <view class="sort-option {{sortMode === 'completedAt' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="completedAt">
+      <text class="sort-option-icon">🕐</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按完成时间</text>
+        <text class="sort-option-desc">最近完成的排在前面</text>
+      </view>
+      <text wx:if="{{sortMode === 'completedAt'}}" class="sort-option-check">✓</text>
+    </view>
+
+    <view class="sort-option {{sortMode === 'name' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="name">
+      <text class="sort-option-icon">🔤</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按名称</text>
+        <text class="sort-option-desc">按字母 / 拼音顺序排列</text>
+      </view>
+      <text wx:if="{{sortMode === 'name'}}" class="sort-option-check">✓</text>
+    </view>
+
+    <view class="sort-option {{sortMode === 'days' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="days">
+      <text class="sort-option-icon">📅</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按天数</text>
+        <text class="sort-option-desc">倒计时在前，正计时在后，各组天数多的优先</text>
+      </view>
+      <text wx:if="{{sortMode === 'days'}}" class="sort-option-check">✓</text>
+    </view>
+  </view>
+</view>
+
+<!-- 关于弹窗 -->
+<view
+  class="modal-mask modal-mask-about {{aboutModalActive ? 'modal-mask-active' : ''}}"
+  wx:if="{{showAboutModal}}"
+  bindtap="closeAboutModal"
+  catchtouchmove="stopPropagation"
+>
+  <view
+    class="modal about-modal {{aboutModalActive ? 'modal-active' : ''}}"
+    catchtap="stopPropagation"
+    bindtouchstart="onAboutModalTouchStart"
+    bindtouchmove="onAboutModalTouchMove"
+    bindtouchend="onAboutModalTouchEnd"
+  >
+    <view class="modal-drag-bar"></view>
+    <view class="about-header">
+      <text class="about-app-name">实用计时清单</text>
+      <text class="about-version">版本 {{version}}</text>
+    </view>
+
+    <view class="about-divider"></view>
+
+
+    <view class="about-item">
+      <text class="about-label">联系邮箱</text>
+      <text class="about-value">your-email@example.com</text>
+    </view>
+
+    <view class="about-divider"></view>
+
+    <view class="about-item">
+      <text class="about-label">ICP 备案号</text>
+      <text class="about-value">粤ICP备XXXXXXXX号</text>
+    </view>
+    <view class="about-item about-item-link" bindtap="openBeian">
+      <text class="about-label">备案查询</text>
+      <view class="about-link-row">
+        <text class="about-link">beian.miit.gov.cn</text>
+        <text class="about-link-arrow">复制</text>
+      </view>
+    </view>
+
+    <view class="about-divider"></view>
+
+    <view class="about-item about-item-link" bindtap="openPrivacy">
+      <text class="about-label">隐私保护指引</text>
+      <text class="about-link-arrow">›</text>
+    </view>
+
+    <view class="about-divider"></view>
+
+    <text class="about-copyright">© 2026 xxtymeHA. All rights reserved.</text>
+  </view>
+</view>

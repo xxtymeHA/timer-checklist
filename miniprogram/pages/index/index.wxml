@@ -1,0 +1,485 @@
+<view class="page {{modalActive || confirmActive || sortModalActive || subscribedModalActive ? 'page-dimmed' : ''}}">
+
+<!-- 顶部 -->
+<view class="header-wrap">
+  <view class="header">
+    <view class="header-left">
+      <text class="header-title">我的提醒</text>
+      <text class="header-sub">{{todayStr}}</text>
+    </view>
+    <view class="header-btns">
+      <view class="header-sort-btn" bindtap="openSortModal">
+      <text class="header-sort-icon">⇅</text>
+    </view>
+      <view class="header-subscribed-btn" bindtap="openSubscribedModal">
+        <text class="header-subscribed-icon">🔔</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 列表 -->
+<view class="card-list">
+
+  <!-- 空状态 -->
+  <view wx:if="{{items.length === 0}}" class="empty">
+    <text class="empty-icon">⏱</text>
+    <text class="empty-text">还没有计时项目</text>
+    <text class="empty-hint">点击右下角 + 添加</text>
+  </view>
+
+  <!-- 卡片 -->
+  <view
+    wx:for="{{items}}"
+    wx:key="id"
+    class="card-wrap {{item.flyOut ? 'card-wrap-flyout' : ''}} {{item.flyOutComplete ? 'card-wrap-flyout-complete' : ''}} {{item.flyOutCollapse ? 'card-wrap-flyout-collapse' : ''}}"
+    style="{{item.wrapStyle || ''}}"
+    data-id="{{item.id}}"
+    bindtouchstart="onCardTouchStart"
+    bindtouchmove="onCardTouchMove"
+    bindtouchend="onCardTouchEnd"
+  >
+    <view class="card-bg-btn {{item.swiping === 'complete' ? 'card-bg-complete' : 'card-bg-delete'}}" catchtap="{{item.swiping === 'complete' ? 'onCompleteBtnTap' : 'deleteItem'}}" data-id="{{item.id}}">
+    <text class="card-bg-btn-text">{{item.swiping === 'complete' ? '✔ 继续滑动以完成' : '继续滑动以删除'}}</text>
+    </view>
+
+    <view
+      class="card card-{{item.display.status}} {{item.noGlow ? 'card-no-glow' : ''}}"
+      bindtap="onItemTap"
+      data-id="{{item.id}}"
+      style="transform:translateX({{item.swipeOffset || 0}}rpx); {{item.cardStyle || ''}}"
+    >
+      <view class="card-photo-wrap">
+        <image wx:if="{{item.photo}}" src="{{item.photo}}" class="card-photo" mode="aspectFill"/>
+        <view wx:else class="card-photo-placeholder">
+          <text>{{item.emoji}}</text>
+        </view>
+      </view>
+      <view class="card-center">
+        <view class="card-name-row">
+          <text class="card-name">{{item.name}}</text>
+          <text wx:if="{{item.subscribed || item.countupReminderEnabled}}" class="card-bell">🔔</text>
+        </view>
+        <text class="card-date">{{item.display.dateLabel}}：{{item.date}}</text>
+        <text wx:if="{{item.note}}" class="card-note">{{item.note}}</text>
+      </view>
+      <view class="card-right">
+        <text class="card-label">{{item.display.label}}</text>
+        <text class="card-days">{{item.display.days}}</text>
+        <text class="card-unit">天</text>
+      </view>
+    </view>
+
+  </view>
+
+</view>
+
+
+<!-- 右下角 + -->
+</view>
+
+<view class="fab" bindtap="openModal">
+  <text class="fab-icon">+</text>
+</view>
+
+<!-- 添加 / 编辑弹窗 -->
+<view
+  class="modal-mask modal-mask-edit {{modalActive ? 'modal-mask-active' : ''}}" 
+  wx:if="{{showModal}}"
+  bindtap="closeModal"
+  catchtouchmove="stopPropagation"
+>
+  <view class="modal {{modalActive ? 'modal-active' : ''}}" style="{{modalHeight ? 'height:' + modalHeight + 'px;' : ''}}">
+    <scroll-view
+      scroll-y
+      class="modal-scroll"
+      style="{{modalHeight ? 'height:' + modalHeight + 'px;' : ''}}"
+      catchtap="stopPropagation"
+      bindtouchstart="onModalTouchStart"
+      bindtouchmove="onModalTouchMove"
+      bindtouchend="onModalTouchEnd"
+      bindscroll="onModalScroll"
+    >
+      <view class="modal-inner">
+        <view class="modal-drag-bar"></view>
+        <view class="modal-header">
+          <view class="modal-header-btn modal-close-btn" bindtap="closeModal">
+            <text class="modal-header-btn-icon">✕</text>
+          </view>
+          <text class="modal-title">{{editId ? '编辑提醒' : '新建提醒'}}</text>
+          <view class="modal-header-btn modal-confirm-btn" bindtap="saveItem">
+            <text class="modal-header-btn-icon">✓</text>
+          </view>
+        </view>
+
+        <!-- 名称 -->
+        <view class="form-item">
+          <text class="form-label">名称</text>
+          <view class="name-row">
+            <view class="emoji-input-wrap">
+              <input
+                class="emoji-input"
+                value="{{emojiInputValue}}"
+                placeholder="{{emojiFocused ? '' : (form.customEmoji || defaultEmoji)}}"
+                bindinput="onEmojiInput"
+                bindfocus="onEmojiFocus"
+                bindblur="onEmojiBlur"
+                maxlength="2"
+              />
+            </view>
+            <textarea
+              id="nameInput"
+              class="form-textarea name-textarea"
+              placeholder="请输入名称"
+              value="{{form.name}}"
+              data-field="name"
+              bindinput="onFormInput"
+              auto-height
+              maxlength="50"
+            />
+          </view>
+        </view>
+
+        <!-- 计时类型 -->
+        <view class="form-item">
+          <text class="form-label">计时类型</text>
+          <view class="mode-group">
+            <view class="mode-slider mode-slider-{{form.mode}}"></view>
+            <view class="mode-btn {{form.mode === 'countdown' ? 'mode-active' : ''}}" bindtap="onModeChange" data-value="countdown">⏳ 倒计时</view>
+            <view class="mode-btn {{form.mode === 'countup' ? 'mode-active' : ''}}" bindtap="onModeChange" data-value="countup">⏱ 正计时</view>
+          </view>
+        </view>
+
+        <!-- 日期时间 -->
+        <view class="form-item">
+          <text class="form-label">{{form.mode === 'countdown' ? '到期时间' : '开始时间'}}</text>
+          <view class="datetime-row">
+            <picker mode="date" value="{{form.date}}" bindchange="onDateChange">
+              <view class="form-picker">
+                <text>{{form.date}}</text>
+                <text class="picker-arrow">›</text>
+              </view>
+            </picker>
+            <picker mode="time" value="{{form.time}}" bindchange="onTimeChange">
+              <view class="form-picker">
+                <text>{{form.time}}</text>
+                <text class="picker-arrow">›</text>
+              </view>
+            </picker>
+          </view>
+        </view>
+
+        <!-- 备注 -->
+        <view class="form-item">
+          <text class="form-label">备注（可选）</text>
+          <textarea
+            class="form-textarea"
+            placeholder="添加备注..."
+            value="{{form.note}}"
+            data-field="note"
+            bindinput="onFormInput"
+            auto-height
+            maxlength="100"
+          />
+        </view>
+
+        <!-- 倒计时：到期提醒 -->
+        <block wx:if="{{form.mode === 'countdown'}}">
+          <view class="form-item {{isExpired ? 'disabled' : ''}}">
+            <view class="switch-row">
+              <view class="switch-left">
+                <text class="switch-title">到期提醒</text>
+                <text class="switch-desc">{{isExpired ? '已过期，无法订阅' : '保存后通过微信"服务通知"推送提醒'}}</text>
+              </view>
+              <switch
+                checked="{{form.subscribed}}"
+                disabled="{{isExpired}}"
+                bindchange="onSubscribeToggle"
+                color="#4A90E2"
+              />
+            </view>
+          </view>
+          <view class="form-item" wx:if="{{form.subscribed}}">
+            <text class="form-label">提醒内容（消息中显示）</text>
+            <textarea
+              class="form-textarea"
+              placeholder="自定义提醒消息，如：记得续保"
+              value="{{form.reminderContent}}"
+              data-field="reminderContent"
+              bindinput="onFormInput"
+              auto-height
+              maxlength="20"
+            />
+          </view>
+          <!-- 提前提醒 -->
+          <view class="form-item" wx:if="{{form.mode === 'countdown' && form.subscribed}}">
+  <view class="switch-row">
+    <view class="switch-left">
+      <text class="switch-title">提前提醒</text>
+      <text class="switch-desc">在到期前额外发送一条提醒</text>
+    </view>
+    <switch
+      checked="{{form.earlyReminderEnabled}}"
+      bindchange="onEarlyReminderToggle"
+      color="#4A90E2"
+    />
+  </view>
+</view>
+<view class="form-item" wx:if="{{form.mode === 'countdown' && form.subscribed && form.earlyReminderEnabled}}">
+  <text class="form-label">提前多久提醒</text>
+  <view class="countup-reminder-row">
+  <input
+    class="countup-value-input"
+    type="number"
+    value="{{form.earlyReminderValue}}"
+    bindinput="onEarlyReminderValueInput"
+  />
+  <picker
+    class="countup-unit-picker"
+    value="{{earlyReminderUnitIndex}}"
+    range="{{earlyReminderUnits}}"
+    bindchange="onEarlyReminderUnitChange"
+  >
+    <view class="picker-text">
+      <text>{{earlyReminderUnits[earlyReminderUnitIndex]}}</text>
+      <text class="picker-arrow">›</text>
+    </view>
+  </picker>
+</view>
+</view>
+        </block>
+
+        <!-- 正计时：定时提醒 -->
+        <block wx:if="{{form.mode === 'countup'}}">
+          <view class="form-item">
+            <view class="switch-row">
+              <view class="switch-left">
+                <text class="switch-title">开启提醒</text>
+                <text class="switch-desc">保存后通过微信"服务通知"推送提醒</text>
+              </view>
+              <switch
+                checked="{{form.countupReminderEnabled}}"
+                bindchange="onCountupReminderToggle"
+                color="#4A90E2"
+              />
+            </view>
+          </view>
+          <view class="form-item" wx:if="{{form.countupReminderEnabled}}">
+            <text class="form-label">在开始后多久提醒</text>
+            <view class="countup-reminder-row">
+              <input
+                class="countup-value-input"
+                type="number"
+                value="{{form.countupReminderValue}}"
+                bindinput="onCountupReminderValueInput"
+              />
+              <picker
+                class="countup-unit-picker"
+                value="{{countupUnitIndex}}"
+                range="{{countupUnits}}"
+                bindchange="onCountupReminderUnitChange"
+              >
+                <view class="picker-text">
+                  <text>{{countupUnits[countupUnitIndex]}}</text>
+                  <text class="picker-arrow">›</text>
+                </view>
+              </picker>
+              <text class="countup-time-label">提醒时间</text>
+              <picker
+                class="countup-time-picker"
+                mode="time"
+                value="{{form.countupReminderTime}}"
+                bindchange="onCountupReminderTimeChange"
+              >
+                <view class="picker-text">
+                  <text>{{form.countupReminderTime}}</text>
+                  <text class="picker-arrow">›</text>
+                </view>
+              </picker>
+            </view>
+            <view class="form-hint" wx:if="{{countupReminderError}}">{{countupReminderError}}</view>
+          </view>
+        </block>
+
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 一键订阅确认弹窗 -->
+<view
+  class="modal-mask modal-mask-confirm {{confirmActive ? 'modal-mask-active' : ''}}"
+  wx:if="{{showConfirmModal}}"
+  bindtap="closeConfirmModal"
+  catchtouchmove="stopPropagation"
+>
+
+  <view
+    class="modal confirm-modal {{confirmActive ? 'modal-active' : ''}}"
+    catchtap="stopPropagation"
+    bindtouchstart="onConfirmTouchStart"
+    bindtouchmove="onConfirmTouchMove"
+    bindtouchend="onConfirmTouchEnd"
+  >
+    <view class="modal-drag-bar"></view>
+    <view class="confirm-icon">🔔</view>
+    <text class="confirm-title">一键订阅提醒</text>
+    <text class="confirm-desc">    将为未过期的倒计时项目开启到期提醒。
+    *正计时项目不受影响。</text>
+    <view class="save-btn" catchtap="confirmSubscribeAll">确认订阅</view>
+    <view class="cancel-btn" catchtap="closeConfirmModal">取消</view>
+  </view>
+</view>
+
+<!-- 排序方式弹窗 -->
+<view
+  class="modal-mask modal-mask-sort {{sortModalActive ? 'modal-mask-active' : ''}}"
+  wx:if="{{showSortModal}}"
+  bindtap="closeSortModal"
+>
+  <view class="modal sort-modal {{sortModalActive ? 'modal-active' : ''}}" 
+  catchtap="stopPropagation"
+  catchtouchstart="onSortModalTouchStart"
+  catchtouchmove="onSortModalTouchMove"
+  catchtouchend="onSortModalTouchEnd"
+>
+    <view class="modal-drag-bar"></view>
+    <text class="modal-title sort-modal-title">排序方式</text>
+
+    <view class="sort-option {{sortMode === 'default' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="default">
+      <text class="sort-option-icon">⏳</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按紧迫程度</text>
+        <text class="sort-option-desc">过期 → 今天 → 紧急 → 安全</text>
+      </view>
+      <text wx:if="{{sortMode === 'default'}}" class="sort-option-check">✓</text>
+    </view>
+
+    <view class="sort-option {{sortMode === 'createdAt' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="createdAt">
+      <text class="sort-option-icon">🕐</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按创建时间</text>
+        <text class="sort-option-desc">最早创建的排在前面</text>
+      </view>
+      <text wx:if="{{sortMode === 'createdAt'}}" class="sort-option-check">✓</text>
+    </view>
+
+    <view class="sort-option {{sortMode === 'name' ? 'sort-option-active' : ''}}" bindtap="onSortChange" data-mode="name">
+      <text class="sort-option-icon">🔤</text>
+      <view class="sort-option-text">
+        <text class="sort-option-title">按名称</text>
+        <text class="sort-option-desc">按字母 / 拼音顺序排列</text>
+      </view>
+      <text wx:if="{{sortMode === 'name'}}" class="sort-option-check">✓</text>
+    </view>
+  </view>
+</view>
+
+
+<!-- 已订阅弹窗 -->
+<view class="modal-mask modal-mask-subscribed {{subscribedModalActive ? 'modal-mask-active' : ''}}" 
+     bindtap="closeSubscribedModal" 
+     wx:if="{{subscribedModalVisible}}"  
+     catchtouchmove="stopPropagation">
+  <view class="modal modal-subscribed {{subscribedModalActive ? 'modal-active' : ''}}"
+   catchtap="stopPropagation"
+   bindtouchstart="onSubscribedModalTouchStart"
+   bindtouchmove="onSubscribedModalTouchMove"
+   bindtouchend="onSubscribedModalTouchEnd"
+   >
+    <view class="modal-drag-bar"></view>
+    <view class="modal-header">
+  <view class="modal-header-btn modal-clear-btn" bindtap="confirmClearExpired">
+    <text class="modal-header-btn-icon">🗑</text>
+  </view>
+  <text class="modal-title">已订阅提醒</text>
+  <view class="modal-header-btn modal-subscribe-all-btn" bindtap="subscribeAll">
+    <text class="modal-header-btn-icon">📧</text>
+    <text class="modal-subscribe-all-text">一键订阅</text>
+  </view>
+</view>
+
+
+    
+<scroll-view
+  scroll-y
+  class="subscribed-scroll"
+  bindscroll="onSubscribedModalScroll"
+  catchtouchmove="stopPropagation"
+>
+
+
+      <view wx:if="{{subscribedItems.length === 0}}" class="subscribed-empty">
+        <text class="subscribed-empty-icon">📭</text>
+        <text class="subscribed-empty-text">暂无订阅项目</text>
+      </view>
+      
+      <view
+  wx:for="{{subscribedItems}}"
+  wx:key="id"
+  class="card-wrap subscribed-card-wrap {{item.flyOut ? 'card-wrap-flyout' : ''}} {{item.flyOutCollapse ? 'card-wrap-flyout-collapse' : ''}} {{item.showDelete ? 'show-delete' : ''}}"
+  style="{{item.wrapStyle || ''}}"
+  data-id="{{item.id}}"
+  bindtap="onSubscribedItemTap"
+>
+
+
+  <view class="card {{item.cardClass || ''}}" style="{{item.cardStyle || ''}}">
+    <view class="card-photo-wrap">
+      <view class="card-photo-placeholder">
+        <text>{{item.emoji}}</text>
+      </view>
+    </view>
+    <view class="card-center">
+      <view class="card-name-row">
+        <text class="card-name">{{item.name}}</text>
+        <text wx:if="{{item.lastSentDate}}" class="card-pushed-tag">已推送</text>
+      </view>
+      <text class="card-date">{{item.reminderInfo}}</text>
+    </view>
+    <view class="card-right">
+      <text class="card-label">{{item.labelText}}</text>
+      <text class="card-days">{{item.daysText}}</text>
+      <text class="card-unit">{{item.unitText}}</text>
+    </view>
+  </view>
+</view>
+
+    </scroll-view>
+  </view>
+</view>
+
+<!--撤销横幅 -->
+<view
+  class="undo-bar {{undoVisible ? 'undo-bar-active' : ''}} {{undoStackOffset ? 'undo-bar-stacked' : ''}}"
+  wx:if="{{showUndo}}"
+>
+  <text class="undo-text">已删除 {{undoCount}} 个项目</text>
+  <text class="undo-countdown">{{undoCountdown}}s</text>
+  <view class="undo-btn" bindtap="undoDelete">
+    <text class="undo-btn-text">撤销</text>
+  </view>
+  <view class="undo-bar-progress" style="width:{{undoProgressWidth}}%"></view>
+</view>
+
+<!-- 排序撤回横幅 -->
+<view
+  class="undo-bar sort-undo-bar {{sortUndoVisible ? 'undo-bar-active' : ''}} {{sortUndoStackOffset ? 'undo-bar-stacked' : ''}}"
+  wx:if="{{showSortUndo}}"
+>
+  <view class="undo-close-btn" catchtap="dismissSortUndoBar">
+    <text class="undo-close-icon">✕</text>
+  </view>
+  <text class="undo-text">排序方式已更改</text>
+  <text class="undo-countdown">{{sortUndoCountdown}}s</text>
+  <view class="undo-btn" bindtap="undoSort">
+    <text class="undo-btn-text">撤销</text>
+  </view>
+  <view class="undo-bar-progress sort-undo-bar-progress" style="width:{{sortUndoProgressWidth}}%"></view>
+</view>
+
+
+<!-- 清除已过期提示横幅 -->
+<view class="undo-bar clear-bar {{clearVisible ? 'undo-bar-active' : ''}}" wx:if="{{showClearBar}}">
+  <text class="undo-text">已清除 {{clearCount}} 个过期项目</text>
+</view>

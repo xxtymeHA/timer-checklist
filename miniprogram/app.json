@@ -1,0 +1,34 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/tool/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "实用计时清单",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "进行中",
+        "iconPath": "images/tab-reminder.png",
+        "selectedIconPath": "images/tab-reminder-active.png"
+      },
+      {
+        "pagePath": "pages/tool/index",
+        "text": "已完成",
+        "iconPath": "images/tab-done.png",
+        "selectedIconPath": "images/tab-done-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}
+

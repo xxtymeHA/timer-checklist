@@ -1,0 +1,9 @@
+page {
+  background-color: #f5f6fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  box-sizing: border-box;
+}
+
+.container {
+  padding: 0 16rpx;
+}

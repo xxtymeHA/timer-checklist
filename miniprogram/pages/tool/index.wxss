@@ -1,0 +1,301 @@
+@import "/pages/index/index.wxss";
+
+/* 覆盖 header 布局，确保按钮贴右 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 卡片支持 box-shadow 过渡，配合飞入动画渐显卡光 */
+.card {
+  transition: box-shadow 0.6s ease, transform 0.5s cubic-bezier(0.32,0.72,0,1), opacity 0.5s ease;
+}
+
+
+/* 已完成页特有的卡片发光颜色 */
+.card-done-countdown {
+  box-shadow: -4px 0 12px rgba(74, 144, 226, 0.35), 0 4rpx 24rpx rgba(0,0,0,0.08);
+}
+
+.card-done-countup {
+  box-shadow: -4px 0 12px rgba(255, 182, 193, 0.6), 0 4rpx 24rpx rgba(0,0,0,0.08);
+}
+
+.card-done-countdown .card-days { color: #4A90E2; }
+.card-done-countup .card-days { color: #f48fb1; }
+
+/* 恢复按钮背景 */
+.card-bg-restore {
+  background: rgba(82, 196, 26, 0.65);
+  justify-content: flex-start;
+  padding-left: 48rpx;
+}
+
+/* 弹窗详情行 */
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid #f0f2f8;
+  gap: 24rpx;
+}
+
+.detail-label {
+  font-size: 28rpx;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 28rpx;
+  color: #1a1a2e;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* 恢复按钮（弹窗右上角） */
+.modal-restore-btn {
+  background: #f0fff0;
+}
+
+.modal-restore-btn .modal-header-btn-icon {
+  color: #52c41a;
+}
+
+/* 飞出动画复用 */
+@keyframes flyOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-110%); }
+}
+
+@keyframes flyOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(110%); }
+}
+
+.card-wrap-flyout {
+  animation: flyOutLeft 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  max-height: 200rpx;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 20rpx;
+}
+
+.card-wrap-flyout-restore {
+  animation: flyOutRight 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  max-height: 200rpx;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 20rpx;
+}
+
+.card-wrap-flyout-collapse {
+  max-height: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* 飞入过程中临时压制彩色卡光 */
+.card-no-glow {
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08) !important;
+}
+
+
+/* ===== 关于按钮 ===== */
+.tool-about-btn {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 34rpx;
+  background: rgba(240, 242, 248, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-about-icon {
+  font-size: 40rpx;
+  color: #bbb;
+  line-height: 1;
+}
+
+/* ===== 关于弹窗 ===== */
+.modal-mask-about::before {
+  background: linear-gradient(to top, rgba(10,10,30,0.55) 30%, rgba(10,10,30,0.4) 50%, rgba(10,10,30,0) 100%);
+}
+.about-modal {
+  padding: 24rpx 0 60rpx;
+}
+.about-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 32rpx 32rpx;
+  gap: 10rpx;
+}
+.about-app-name {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+.about-version {
+  font-size: 24rpx;
+  color: #aaa;
+}
+.about-divider {
+  height: 1rpx;
+  background: #eef0f6;
+  margin: 4rpx 0;
+}
+.about-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 40rpx;
+}
+.about-item-link {
+  /* 可点击项无需额外样式，tap 反馈即可 */
+}
+.about-label {
+  font-size: 28rpx;
+  color: #555;
+  font-weight: 500;
+}
+.about-value {
+  font-size: 28rpx;
+  color: #999;
+}
+.about-link-row {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+.about-link {
+  font-size: 28rpx;
+  color: #4A90E2;
+}
+.about-link-arrow {
+  font-size: 32rpx;
+  color: #bbb;
+}
+.about-copyright {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: #ccc;
+  padding: 24rpx 32rpx 0;
+}
+
+/* header 右侧区域 */
+.header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 关于按钮 — 调小尺寸，视觉更轻 */
+.tool-about-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: rgba(240, 242, 248, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-about-icon {
+  font-size: 32rpx;
+  color: #bbb;
+  line-height: 1;
+}
+
+/* 清空按钮 */
+.tool-clear-btn {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 34rpx;
+  background: rgba(255, 240, 240, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.tool-clear-icon {
+  font-size: 25rpx;
+  line-height: 1;
+}
+
+/* 清空确认弹窗遮罩 */
+.modal-mask-clearall::before {
+  background: linear-gradient(to top, rgba(10,10,30,0.55) 30%, rgba(10,10,30,0.4) 50%, rgba(10,10,30,0) 100%);
+}
+
+/* 危险操作按钮（红色） */
+.danger-btn {
+  background: linear-gradient(135deg, #ff4d4f, #e03030) !important;
+  box-shadow: 0 8rpx 24rpx rgba(255, 77, 79, 0.4) !important;
+}
+
+/* 排序按钮 */
+.tool-sort-btn {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 34rpx;
+  background: rgba(240, 245, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.tool-sort-icon {
+  font-size: 40rpx;
+  color: #4A90E2;
+  line-height: 1;
+}
+
+/* 排序撤销横幅（蓝紫色，与删除红色区分）*/
+.sort-undo-bar {
+  background: rgba(74, 100, 180, 0.55);
+}
+
+.sort-undo-bar-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 8rpx;
+  background: rgba(30, 60, 160, 0.85);
+  transition: width 0.1s linear;
+  z-index: 10;
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.undo-close-btn {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4rpx;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.undo-close-icon {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 详情弹窗遮罩阴影范围缩小，与弹窗高度匹配 */
+.modal-mask-edit::before {
+  background: linear-gradient(to top, rgba(10,10,30,0.55) 30%, rgba(10,10,30,0.4) 50%, rgba(10,10,30,0) 100%);
+}
